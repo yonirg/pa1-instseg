@@ -1,0 +1,37 @@
+{
+ "args": {
+  "run": "runs/p2_unet_boundary",
+  "grid": 3,
+  "tile": 128,
+  "overlap": 32,
+  "n_mosaics": 6,
+  "iou_thr": 0.25,
+  "scene": "large"
+ },
+ "summary": {
+  "imagem inteira (refer\u00eancia)": {
+   "map": 0.48589245365772077,
+   "ap50": 0.7746306266938693,
+   "count_err": 5.833333333333333,
+   "objetos_na_borda_quebrados": "24/352"
+  },
+  "tiles: colar miolo (slide 83)": {
+   "map": 0.3029175173643598,
+   "ap50": 0.5267039539050281,
+   "count_err": 49.166666666666664,
+   "objetos_na_borda_quebrados": "144/352"
+  },
+  "corre\u00e7\u00e3o A: fus\u00e3o por IoU na sobreposi\u00e7\u00e3o": {
+   "map": 0.480150006235103,
+   "ap50": 0.7636877523166782,
+   "count_err": 6.833333333333333,
+   "objetos_na_borda_quebrados": "23/352"
+  },
+  "corre\u00e7\u00e3o B: costurar mapas, watershed global": {
+   "map": 0.4876519884347224,
+   "ap50": 0.7775443688644564,
+   "count_err": 5.833333333333333,
+   "objetos_na_borda_quebrados": "24/352"
+  }
+ }
+}

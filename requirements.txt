@@ -1,0 +1,8 @@
+torch>=2.2
+numpy
+scipy
+scikit-image>=0.22
+scikit-learn
+matplotlib
+Pillow
+nbformat

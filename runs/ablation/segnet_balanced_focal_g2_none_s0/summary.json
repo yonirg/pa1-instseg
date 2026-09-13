@@ -1,0 +1,7 @@
+{
+ "best_val_map": 0.33786467365875533,
+ "epochs_run": 12,
+ "train_seconds": 64.9,
+ "n_params": 85740,
+ "out": "runs/ablation/segnet_balanced_focal_g2_none_s0"
+}

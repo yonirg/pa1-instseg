@@ -1,0 +1,23 @@
+{
+ "antes": {
+  "map": 0.5469810517538533,
+  "ap50": 0.8467339449629345,
+  "count_err": 0.890625,
+  "fusao": 127,
+  "fragmento": 33,
+  "perdido": 47,
+  "fantasma": 39
+ },
+ "depois": {
+  "map": 0.5453842034262842,
+  "ap50": 0.8332551309672089,
+  "count_err": 1.1953125,
+  "fusao": 166,
+  "fragmento": 40,
+  "perdido": 60,
+  "fantasma": 44
+ },
+ "mudanca": {
+  "boundary_thickness": 3
+ }
+}

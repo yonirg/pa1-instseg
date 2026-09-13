@@ -1,0 +1,68 @@
+[
+ {
+  "opening": 0,
+  "thr_int": 0.4,
+  "map": 0.537,
+  "ap50": 0.83,
+  "count_err": 1.02,
+  "fusao": 149,
+  "fragmento": 29,
+  "perdido": 48,
+  "fantasma": 32
+ },
+ {
+  "opening": 0,
+  "thr_int": 0.5,
+  "map": 0.547,
+  "ap50": 0.847,
+  "count_err": 0.89,
+  "fusao": 127,
+  "fragmento": 33,
+  "perdido": 47,
+  "fantasma": 39
+ },
+ {
+  "opening": 1,
+  "thr_int": 0.4,
+  "map": 0.555,
+  "ap50": 0.857,
+  "count_err": 0.96,
+  "fusao": 131,
+  "fragmento": 30,
+  "perdido": 50,
+  "fantasma": 20
+ },
+ {
+  "opening": 1,
+  "thr_int": 0.5,
+  "map": 0.544,
+  "ap50": 0.845,
+  "count_err": 1.25,
+  "fusao": 161,
+  "fragmento": 30,
+  "perdido": 58,
+  "fantasma": 22
+ },
+ {
+  "opening": 2,
+  "thr_int": 0.4,
+  "map": 0.538,
+  "ap50": 0.828,
+  "count_err": 1.73,
+  "fusao": 199,
+  "fragmento": 18,
+  "perdido": 76,
+  "fantasma": 15
+ },
+ {
+  "opening": 2,
+  "thr_int": 0.5,
+  "map": 0.509,
+  "ap50": 0.787,
+  "count_err": 2.17,
+  "fusao": 230,
+  "fragmento": 20,
+  "perdido": 81,
+  "fantasma": 14
+ }
+]

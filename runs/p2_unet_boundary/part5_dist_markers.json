@@ -1,0 +1,50 @@
+{
+ "objetos_gt": 1506,
+ "sem_interior": 50,
+ "rows": [
+  {
+   "marker": "dist",
+   "thr_d": 0.4,
+   "map": 0.53,
+   "ap50": 0.809,
+   "count_err": 1.45,
+   "fusao": 172,
+   "fragmento": 21,
+   "perdido": 49,
+   "fantasma": 18
+  },
+  {
+   "marker": "dist",
+   "thr_d": 0.5,
+   "map": 0.556,
+   "ap50": 0.853,
+   "count_err": 0.93,
+   "fusao": 131,
+   "fragmento": 25,
+   "perdido": 46,
+   "fantasma": 15
+  },
+  {
+   "marker": "dist",
+   "thr_d": 0.6,
+   "map": 0.554,
+   "ap50": 0.86,
+   "count_err": 1.11,
+   "fusao": 149,
+   "fragmento": 28,
+   "perdido": 58,
+   "fantasma": 14
+  },
+  {
+   "marker": "dist",
+   "thr_d": 0.7,
+   "map": 0.521,
+   "ap50": 0.81,
+   "count_err": 1.52,
+   "fusao": 193,
+   "fragmento": 41,
+   "perdido": 68,
+   "fantasma": 14
+  }
+ ]
+}

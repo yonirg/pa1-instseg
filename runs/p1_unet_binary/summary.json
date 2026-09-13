@@ -1,0 +1,7 @@
+{
+ "best_val_map": 0.08887716584251856,
+ "epochs_run": 12,
+ "train_seconds": 236.6,
+ "n_params": 482466,
+ "out": "runs/p1_unet_binary"
+}

@@ -1,0 +1,7 @@
+{
+ "best_val_map": 0.29688101479453655,
+ "epochs_run": 12,
+ "train_seconds": 89.5,
+ "n_params": 121060,
+ "out": "runs/ablation/unet_balanced_focal_g5_none_s0"
+}

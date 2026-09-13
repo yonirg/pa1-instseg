@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+/data/
+exemplo_notebook.png
+exemplo_instancias.npy
