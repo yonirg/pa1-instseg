@@ -2,9 +2,10 @@
 
 **Resumo honesto:** o esqueleto deste repositório (estrutura de pacotes, primeiras versões
 dos módulos, scripts de cada parte, README) foi gerado com o Claude (Anthropic) a partir
-do PDF do PA, e depois rodado e depurado em conversa. Os experimentos reportados em
-`RESULTS.md` foram executados nesse mesmo ambiente (1 núcleo de CPU) — por isso os
-orçamentos de tempo curtos. Tudo o que está aqui nós lemos, entendemos e conseguimos
+do PDF do PA, e depois rodado e depurado em conversa. A primeira rodada de experimentos
+(Parte 0 e versões sintéticas das Partes 1–6) foi executada num ambiente de 1 núcleo de CPU.
+Depois, com o Claude Code rodando no nosso Mac (Apple M4 Pro), conferimos o repositório
+contra o PDF, e todas as Partes 1–6 foram refeitas no DSB2018 na GPU (episódios 7–9). Tudo o que está aqui nós lemos, entendemos e conseguimos
 explicar; onde ainda não conseguimos, está marcado como **[a fazer]**.
 
 > Regra que seguimos: se não sabemos explicar por que uma linha existe, ela não fica.
@@ -49,13 +50,32 @@ explicar; onde ainda não conseguimos, está marcado como **[a fazer]**.
    cena sintética grande gerada direto. A correção B (costurar mapas e rodar o watershed
    uma vez) foi ideia nossa depois de a IA implementar a fusão por IoU.
 
+7. **Checagem contra o enunciado.** Pedimos ao Claude Code para conferir item a item o PDF
+   contra o repositório. O achado principal: tudo tinha rodado só no sintético, e o PDF
+   trata o sintético como teste unitário ("antes de tocar em dados reais"). O loader do
+   DSB2018 existia, mas nunca tinha sido executado. Baixamos o `stage1_train` e conferimos o
+   split por modalidade (546 fluorescência / 108 histologia / 16 brightfield → 469/100/101).
+
+8. **Três bugs que só apareceram na GPU (MPS).** (a) a perda não era movida para o device
+   (o buffer α ficava na CPU → erro); (b) `torch.bincount` no MPS cai para a CPU e custava
+   0,36 s por passo — trocamos por uma comparação por classe e conferimos que dá o mesmo α;
+   (c) o treino continuava 3× mais lento que o benchmark da rede sozinha. Medindo separado o
+   tempo de dados e de GPU, a causa era o batch **não contíguo** (o `transpose` HWC→CHW da
+   imagem do DSB): as convoluções no MPS ficam ~3× mais lentas. Um `np.ascontiguousarray`
+   levou a época de 36 s para 12 s. Também medimos que 4 treinos em paralelo na mesma GPU
+   ficam 7,7× mais lentos cada, então os scripts rodam em sequência.
+
+9. **Augmentação que não acontecia.** O `CachedDataset` materializava o recorte aleatório
+   256×256 de cada imagem uma vez só; no DSB isso fixa o mesmo recorte em todas as épocas.
+   O treino no DSB passou a não usar cache (o custo de gerar os rótulos é ~3 ms/amostra).
+
 ## O que é nosso e o que é da IA
 
 | | |
 |---|---|
 | Da IA (revisado por nós) | estrutura do pacote, versões iniciais de todos os módulos, scripts das partes, README |
 | Nosso | escolha da trilha, definições de fronteira/AP/matching, orçamentos e hiperparâmetros das ablações, decisão de descartar o mosaico colado, interpretação de todos os resultados, apresentação |
-| **[a fazer]** | rodar em DSB2018 (loader e split já existem, não testado com os dados reais); rodar as ablações com GPU e ≥ 3 seeds; Eixo 3 (código pronto, não rodado) |
+| **[a fazer]** | ablações com ≥ 3 seeds e mais épocas; Eixo 3 (código pronto, não rodado) |
 
-Ferramentas: Claude (Anthropic) via app; nenhum código de repositório de terceiros foi
-colado.
+Ferramentas: Claude (Anthropic) via app e Claude Code (terminal, no nosso Mac); nenhum
+código de repositório de terceiros foi colado.

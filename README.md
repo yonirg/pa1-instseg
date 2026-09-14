@@ -3,7 +3,7 @@
 Disciplina Aprendizado Profundo (FGV) · Prof. Dario Oliveira · Monitor Erick Brito
 
 Fazemos as arquiteturas de segmentação **semântica** da aula (U-Net, SegNet, DeepLab)
-produzirem rótulos **instance-aware** sem detectores de região. Trilha escolhida:
+produzirem rótulos **instance-aware** sem detectores de região, no **DSB2018 (Opção A)**. Trilha escolhida:
 **A — fronteiras + distância + watershed**. Decoder, perdas, matching e pós-processamento
 são nossos (`pa1_instseg/`); só usamos `scipy.ndimage`, `skimage.segmentation.watershed`
 e `scipy.optimize.linear_sum_assignment`.
@@ -11,55 +11,62 @@ e `scipy.optimize.linear_sum_assignment`.
 ## Ambiente
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate      # testado com Python 3.12
 pip install -r requirements.txt        # torch, numpy, scipy, scikit-image, scikit-learn, matplotlib, Pillow
+pip install jupyter                    # só para abrir inferencia.ipynb
 ```
 
-Testado com Python 3.12, PyTorch 2.x (CPU e CUDA). Todos os números deste README foram
-gerados em **1 núcleo de CPU** com orçamento de tempo por treino — em GPU basta subir
-`--epochs`, `--base` e `--time-limit`.
+Os resultados do DSB2018 foram gerados num **Apple M4 Pro (GPU via MPS, `--device mps`)**;
+em NVIDIA/Colab use `--device cuda` (ou `DEV=cuda` nos scripts), e `--device cpu` funciona
+em qualquer máquina. A Parte 0 (sintético) foi rodada em 1 núcleo de CPU.
 
 ## Dados
 
+* **Opção A — DSB2018 / BBBC038v1** (dataset principal, Partes 1–6):
+
+  ```bash
+  mkdir -p data/stage1_train
+  curl -L -o data/stage1_train.zip https://data.broadinstitute.org/bbbc/BBBC038/stage1_train.zip
+  unzip -q data/stage1_train.zip -d data/stage1_train     # 670 pastas <id>/{images,masks}
+  ```
+
+  **Split estratificado por modalidade** (`data/dsb2018.py`). O DSB não rotula modalidade;
+  usamos uma heurística fotométrica: imagem colorida → `histology`; cinza com fundo escuro →
+  `fluorescence`; cinza com fundo claro → `brightfield`. Resultado: 546 / 108 / 16 imagens,
+  que batem com a composição conhecida do stage1. Split 70/15/15 com
+  `train_test_split(stratify=modalidade, random_state=0)` → treino 469, val 100, teste 101, as
+  três com as mesmas proporções (sem isso, com só 16 brightfield, o teste pode ficar sem a
+  modalidade mais difícil). O teste é avaliado na **imagem inteira** (até 1040×1388).
+  `--holdout-modality` treina sem uma modalidade (variante da Parte 6).
 * **Parte 0 — sintético**: gerado na hora (`pa1_instseg/data/synthetic.py`), sem download.
   Amostra *i* é determinística (seed `base + i`); train/val/test usam faixas de seed
   disjuntas (0 / 1e6 / 2e6).
-* **Opção A — DSB2018 / BBBC038v1**: baixe `stage1_train` de
-  <https://bbbc.broadinstitute.org/BBBC038> (ou `kaggle competitions download -c data-science-bowl-2018`)
-  e descompacte em `data/stage1_train/<id>/{images,masks}`. O split é estratificado por
-  **modalidade** (heurística fotométrica: `histology` / `fluorescence` / `brightfield`,
-  ver `data/dsb2018.py`), com `--holdout-modality` para a Parte 6.
 
 ## Um comando que treina, um comando que avalia
 
 ```bash
-# treina (Parte 2, modelo final): U-Net, cabeça fronteira+distância, focal balanceada γ=2
-python -m pa1_instseg.train --dataset synthetic --arch unet --base 16 --depth 3 \
-    --head boundary --loss balanced_focal --gamma 2 --epochs 12 --time-limit 270 \
-    --out runs/p2_unet_boundary
+# treina o modelo final (DSB2018): U-Net, cabeça fronteira+distância, focal balanceada γ=2 (~6 min no M4 Pro)
+python -m pa1_instseg.train --dataset dsb --data-root data --arch unet --base 32 --depth 4 \
+    --head boundary --loss balanced_focal --gamma 2 --alpha-max 3 --epochs 30 --val-limit 50 \
+    --device mps --out runs/dsb_p2_unet_boundary
 
 # avalia no teste: IoU/Dice, AP@[.50:.95], mAP, erro de contagem, figura mAP×densidade
-python -m pa1_instseg.evaluate --run runs/p2_unet_boundary --split test
+python -m pa1_instseg.evaluate --run runs/dsb_p2_unet_boundary --split test
 ```
 
-Para DSB2018: `--dataset dsb --data-root data --crop 256 --arch resnet34_unet --pretrained true`.
 Opções úteis do `evaluate`: `--naive` (limiar + componentes conexos), `--rule hungarian`,
-`--marker-source dist` (correção da Parte 5). `inferencia.ipynb` recebe o caminho de uma
-imagem qualquer e devolve a máscara colorida e a contagem (checkpoint em `runs/p2_unet_boundary/model.pt`).
+`--marker-source dist` (marcadores pelos picos da distância). `inferencia.ipynb` recebe o
+caminho de uma imagem qualquer e devolve a máscara colorida e a contagem, usando o checkpoint
+`runs/dsb_p2_unet_boundary/model.pt` (30 MB, versionado).
 
 ## Reproduzir cada parte
 
 | Parte | Comando | Saída |
 |---|---|---|
-| 0 — teste unitário sintético | `scripts/run_main_synthetic.sh` (treina em < 5 min de CPU) | `runs/p2_unet_boundary/history.json` |
-| 1 — baseline semântico + CC | `train ... --head binary --loss ce` → `evaluate` | `runs/p1_unet_binary/eval_test*.json`, `*_density.png` |
-| 2 — cabeça de instâncias | (acima) + `evaluate --naive` para isolar o efeito do pós-processamento | `runs/p2_unet_boundary/eval_test*.json` |
-| 3 — ablações (Eixos 1 e 2, 2 seeds) | `python -m pa1_instseg.ablation --axis 1` / `--axis 2` (ver flags em `RESULTS.md`) | `runs/ablation/axis*_table.md`, `axis*_map.png` |
-| 4 — mosaico | `python scripts/part4_mosaic.py --run runs/p2_unet_boundary` | `part4_mosaic.json`, `part4_border_object.png` |
-| 5 — galeria + campo receptivo + correção | `scripts/part5_failures.py`, `scripts/part5_postproc_sweep.py`, `train --boundary-thickness 3` | `part5_*.json/png` |
-| 6 — estresse (corrupções + escala) | `python scripts/part6_stress.py --run runs/p2_unet_boundary` | `part6_*.json/png` |
-
-`python scripts/collect_results.py` regenera `RESULTS.md` a partir dos JSONs.
+| 0 — teste unitário sintético | `scripts/run_main_synthetic.sh` (treina em < 5 min de CPU) | `runs/p2_unet_boundary/`, `runs/p1_unet_binary/` |
+| 1, 2, 3 — treinos no DSB2018 | `scripts/run_dsb.sh` (baseline binário, modelo final, Eixos 1 e 2 com 2 seeds) | `runs/dsb_p1_unet_binary/`, `runs/dsb_p2_unet_boundary/`, `runs/dsb_ablation/axis*_table.md` |
+| 1, 2, 4, 5, 6 — avaliações no DSB2018 | `scripts/run_dsb_parts.sh` | `eval_test*.json`, `*_density.png`, `part4_*`, `part5_*`, `part6_*` em `runs/dsb_p2_unet_boundary/` |
+| tabelas | `python scripts/collect_results.py` | `RESULTS.md` |
 
 ## Decisões de projeto (as três coisas que a aula não entregou)
 
@@ -89,8 +96,9 @@ pa1_instseg/
   postproc.py         CC ingênuo, watershed            metrics.py       IoU matrix, matching, AP, mAP, contagem
   tiling.py           tiles + 2 correções (Parte 4)    receptive_field.py  RF teórico (slides 35–38)
   train.py / evaluate.py / ablation.py / infer.py / inference.py / viz.py
-scripts/  part4_mosaic.py  part5_failures.py  part5_postproc_sweep.py  part6_stress.py  collect_results.py
-runs/     checkpoints, JSONs e figuras (tudo do README sai daqui)
+scripts/  run_dsb.sh  run_dsb_parts.sh  run_main_synthetic.sh  part4_mosaic.py  part5_failures.py
+          part5_postproc_sweep.py  part6_stress.py  collect_results.py
+runs/     dsb_* = DSB2018 (Partes 1–6); p1_*, p2_*, ablation, p5_* = sintético (Parte 0)
 ```
 
 Referências de ideias (reescritas, não clonadas): rótulo de fronteira entre células e

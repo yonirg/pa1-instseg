@@ -48,7 +48,10 @@ def run(cfg: dict, verbose: bool = True) -> dict:
     train_ds = CachedDataset(dsets["train"], augment=True, seed=cfg["seed"]) if use_cache else dsets["train"]
     val_ds = CachedDataset(dsets["val"]) if cfg["cache"] else dsets["val"]
 
-    criterion = MultiHeadLoss(cfg["head"], cfg["loss"], cfg["gamma"], cfg["alpha"],
+    alpha = cfg["alpha"]
+    if isinstance(alpha, str) and "," in alpha:   # --alpha 1,1,3 → pesos fixos por classe (fundo, interior, fronteira)
+        alpha = [float(a) for a in alpha.split(",")]
+    criterion = MultiHeadLoss(cfg["head"], cfg["loss"], cfg["gamma"], alpha,
                               cfg["dist_loss"], cfg["dist_weight"], alpha_max=cfg["alpha_max"]).to(cfg["device"])
     cfg["in_ch"], cfg["out_ch"] = in_ch, criterion.out_channels
     extra = {"output_stride": cfg["output_stride"], "aspp_rates": tuple(cfg["aspp_rates"])} if cfg["arch"] == "deeplab" else {}
