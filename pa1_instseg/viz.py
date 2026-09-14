@@ -1,8 +1,11 @@
 """Figuras — todas reproduzíveis a partir dos JSONs em ``runs/``."""
 from __future__ import annotations
 
+import sys
+
 import matplotlib
-matplotlib.use("Agg")
+if "ipykernel" not in sys.modules:   # scripts salvam PNG sem display; no Jupyter mantém o backend inline
+    matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage.segmentation import find_boundaries
