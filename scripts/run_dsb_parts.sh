@@ -24,3 +24,4 @@ $PY -m pa1_instseg.evaluate --run runs/dsb_p2_unet_boundary_autoalpha --split te
 $PY scripts/part5_failures.py --run runs/dsb_p2_unet_boundary_autoalpha --fixed $P2
 $PY scripts/part5_correction_dsb.py
 $PY scripts/dsb_breakdown.py
+$PY -c "import json,torch; from pa1_instseg.ablation import class_iou; from pa1_instseg.evaluate import load_run; from pa1_instseg.data import get_datasets; json.dump({rd: class_iou(*[(m, get_datasets(c)[0][\"test\"]) for m, c in [load_run(rd)]][0], \"boundary\", 3) for rd in (\"runs/dsb_p2_unet_boundary\", \"runs/dsb_p2_unet_boundary_autoalpha\")}, open(\"runs/dsb_class_iou_final.json\", \"w\"), indent=1)"

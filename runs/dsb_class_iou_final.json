@@ -1,0 +1,12 @@
+{
+ "runs/dsb_p2_unet_boundary": [
+  0.9756,
+  0.8327,
+  0.1294
+ ],
+ "runs/dsb_p2_unet_boundary_autoalpha": [
+  0.9543,
+  0.701,
+  0.0758
+ ]
+}

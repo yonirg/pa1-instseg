@@ -1,0 +1,7 @@
+{
+ "best_val_map": 0.2569178612554218,
+ "epochs_run": 15,
+ "train_seconds": 53.1,
+ "n_params": 2214004,
+ "out": "runs/dsb_ablation/deeplab_balanced_focal_g2_none_s0"
+}
