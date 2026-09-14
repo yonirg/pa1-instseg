@@ -2,6 +2,8 @@
 
 Disciplina Aprendizado Profundo (FGV) · Prof. Dario Oliveira · Monitor Erick Brito
 
+Autor: **Yonathan Rabinovici Gherman** (trabalho individual).
+
 Fazemos as arquiteturas de segmentação **semântica** da aula (U-Net, SegNet, DeepLab)
 produzirem rótulos **instance-aware** sem detectores de região, no **DSB2018 (Opção A)**. Trilha escolhida:
 **A — fronteiras + distância + watershed**. Decoder, perdas, matching e pós-processamento
