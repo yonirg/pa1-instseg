@@ -23,3 +23,4 @@ $PY scripts/part6_stress.py --run $P2 --limit 101
 $PY -m pa1_instseg.evaluate --run runs/dsb_p2_unet_boundary_autoalpha --split test
 $PY scripts/part5_failures.py --run runs/dsb_p2_unet_boundary_autoalpha --fixed $P2
 $PY scripts/part5_correction_dsb.py
+$PY scripts/dsb_breakdown.py

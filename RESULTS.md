@@ -1,8 +1,99 @@
-# RESULTS.md — números reproduzíveis (1 núcleo de CPU)
+# RESULTS.md — números reproduzíveis
 
 Todos gerados pelos comandos do README; JSONs de origem indicados em cada seção.
 
-## Partes 0, 1 e 2 — baseline vs. cabeça de instâncias (teste sintético, 128 imagens)
+# DSB2018 / BBBC038v1 (Opção A) — Partes 1 a 6
+
+Split estratificado por modalidade (469/100/101 imagens). Teste em imagem inteira. GPU Apple M4 Pro (MPS).
+
+## Partes 1 e 2 — baseline vs. cabeça de instâncias (DSB2018, teste = 101 imagens inteiras)
+
+| modelo | decodificação | matching | mAP | AP50 | AP75 | erro contagem | IoU fg | Dice |
+|---|---|---|---|---|---|---|---|---|
+| U-Net binário (Parte 1) | limiar + CC | greedy | 0.477 | 0.656 | 0.528 | 9.673 | 0.832 | 0.896 |
+| U-Net binário (Parte 1) | limiar + CC | hungarian | 0.477 | 0.656 | 0.528 | 9.673 | 0.832 | 0.896 |
+| U-Net fronteira+dist (Parte 2) | limiar + CC (ingênuo) | greedy | 0.442 | 0.620 | 0.486 | 11.515 | 0.832 | 0.902 |
+| U-Net fronteira+dist (Parte 2) | watershed (marcador = interior) | greedy | 0.502 | 0.706 | 0.552 | 7.168 | 0.832 | 0.902 |
+| U-Net fronteira+dist (Parte 2) | watershed (marcador = interior) | hungarian | 0.502 | 0.706 | 0.552 | 7.168 | 0.832 | 0.902 |
+| U-Net fronteira+dist (Parte 2) | watershed (marcador = distância, Parte 5) | greedy | 0.504 | 0.719 | 0.551 | 7.040 | 0.832 | 0.902 |
+
+`dsb_p2_unet_boundary`: 30 épocas em 350.3 s (GPU MPS), 7763k parâmetros, melhor val mAP 0.358 .
+
+`dsb_p1_unet_binary`: 30 épocas em 384.7 s (GPU MPS), 7763k parâmetros, melhor val mAP 0.342 .
+
+Figura mAP × densidade: `runs/dsb_p1_unet_binary/eval_test_density.png` e `runs/dsb_p2_unet_boundary/eval_test_density.png`.
+
+### mAP por densidade de núcleos e por modalidade (Parte 1, item 5)
+
+| modelo | mAP | AP50 | erro contagem | mAP 0–9 núcleos | mAP 10–24 núcleos | mAP 25–49 núcleos | mAP 50–99 núcleos | mAP ≥100 núcleos | fluorescence | histology | brightfield |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Parte 1: U-Net binária + limiar/CC | 0.477 | 0.656 | 9.7 | 0.56 | 0.57 | 0.45 | 0.30 | 0.50 | 0.54 | 0.24 | 0.00 |
+| Parte 2: mesma rede, decodificação ingênua (CC) | 0.442 | 0.620 | 11.5 | 0.51 | 0.55 | 0.40 | 0.29 | 0.43 | 0.50 | 0.21 | 0.03 |
+| Parte 2: fronteira+distância + watershed | 0.502 | 0.706 | 7.2 | 0.54 | 0.59 | 0.47 | 0.35 | 0.55 | 0.57 | 0.23 | 0.02 |
+| Parte 2: watershed com marcadores da distância | 0.504 | 0.719 | 7.0 | 0.54 | 0.60 | 0.47 | 0.36 | 0.55 | 0.57 | 0.25 | 0.02 |
+| Parte 2 com α automático (antes da Parte 5) | 0.234 | 0.574 | 9.3 | 0.19 | 0.30 | 0.20 | 0.20 | 0.27 | 0.26 | 0.14 | 0.09 |
+
+Imagens por faixa: {'0–9': 12, '10–24': 32, '25–49': 27, '50–99': 20, '≥100': 10}; por modalidade: {'fluorescence': 82, 'histology': 16, 'brightfield': 3}.
+
+Figura: `runs/dsb_breakdown_density.png`.
+
+## Parte 4 — inferência em mosaico (23 imagens grandes do teste (lado menor ≥ 500 px); tiles de 256 px, sobreposição 64)
+
+| estratégia | mAP | AP50 | erro contagem | objetos na borda quebrados |
+|---|---|---|---|---|
+| imagem inteira (referência) | 0.493 | 0.674 | 15.3 | 18/650 |
+| tiles: colar miolo (slide 83) | 0.356 | 0.541 | 31.1 | 202/650 |
+| correção A: fusão por IoU na sobreposição | 0.492 | 0.669 | 15.2 | 15/650 |
+| correção B: costurar mapas, watershed global | 0.493 | 0.670 | 14.9 | 17/650 |
+
+Figuras: `part4_border_object.png`, `part4_mosaic_full.png`.
+
+## Parte 5 — galeria de falhas, campo receptivo e correção
+
+Campo receptivo teórico do encoder (unet): **140 px** (jump 16). Objetos: mediana 20.7 px, p90 36.0, máx 87.7 → 0% maiores que o RF. DeepLab OS8: **356 px com atrous vs 116 px sem**, mesma resolução de saída. Figura: `part5_rf_vs_objects.png`.
+
+Taxonomia no teste inteiro: {'fusao': 339, 'fragmento': 68, 'perdido': 134, 'fantasma': 685}. Galeria: `part5_failure1..5.png`.
+
+| falha | idx | mAP | fusões | fragmentos | perdidos | fantasmas | contraste fg/bg | ruído | p(fronteira) no contato GT |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | 98 | 0.01 | 6 | 1 | 45 | 71 | -0.42 | 0.12 | 0.15 |
+| 2 | 16 | 0.02 | 7 | 2 | 4 | 78 | -0.41 | 0.12 | 0.355 |
+| 3 | 40 | 0.03 | 9 | 2 | 7 | 68 | -0.38 | 0.10 | 0.34 |
+| 4 | 42 | 0.03 | 4 | 2 | 0 | 19 | -0.27 | 0.05 | 0.32 |
+| 5 | 27 | 0.11 | 8 | 0 | 3 | 2 | -0.22 | 0.05 | 0.264 |
+
+**Diagnóstico de cada falha** (modelo final; figuras `runs/dsb_p2_unet_boundary/part5_failure1..5.png`). Campo receptivo de 140 px contra núcleos de no máximo 88 px: nenhuma das cinco falhas é de campo receptivo.
+
+1. **idx 98 — brightfield 1024×1024 (células escamosas).** Núcleos escuros de 10–35 px sobre citoplasma também escuro; 71 fantasmas e 45 perdidos. O brightfield tem 16 imagens no DSB inteiro (11 no treino, 2,3%), com contraste invertido em relação à fluorescência (contraste fg/bg −0,42). A rede nunca aprendeu a separar "núcleo escuro" de "citoplasma escuro": é mudança de modalidade, não de arquitetura.
+2. **idx 16 — brightfield 1024×1024.** Mesmo quadro: 78 fantasmas em detritos e bordas de citoplasma. p(fronteira) quase zero nos núcleos verdadeiros (0,36 no contato), então nem a cabeça de fronteira ajuda: o erro acontece antes, no foreground.
+3. **idx 40 — brightfield 1024×1024.** 68 fantasmas; além disso, o recorte de 256 px usado no treino, numa imagem de 1024 com poucos núcleos pequenos, muitas vezes não contém núcleo nenhum. Com só 11 imagens, a rede vê poucos exemplos positivos dessa modalidade.
+4. **idx 42 — histologia 256×320, núcleos alongados de até 79 px.** 19 fantasmas e 4 fusões. A textura roxa dentro dos núcleos grandes gera vários máximos locais na distância prevista, e cada máximo vira marcador (fragmentos e fantasmas). No contato entre núcleos, p(fronteira) é só 0,32.
+5. **idx 27 — histologia fora de foco.** 8 fusões e p(fronteira) de 0,26 no contato: núcleos borrados e sobrepostos não têm borda visível entre si. Sem evidência fotométrica, a cabeça de fronteira não tem o que detectar.
+
+**Padrão:** as 5 piores imagens do teste são das duas modalidades minoritárias (brightfield e histologia). A tabela por modalidade confirma: mAP 0,57 em fluorescência, 0,23 em histologia e 0,02 em brightfield (`runs/dsb_breakdown.md`).
+
+
+**Correção (α automático zera o peso do fundo; a rede chama o núcleo inteiro de fronteira):** frequência das classes no treino (fundo/interior/fronteira) = [0.8613, 0.1345, 0.0042]; α automático = [0.017, 0.111, 2.872] → α fixo = [1, 1, 3], mesma U-Net, mesmo orçamento (`--alpha 1,1,3`).
+
+| | mAP | AP50 | erro contagem | fusões | fragmentos | perdidos | fantasmas |
+|---|---|---|---|---|---|---|---|
+| antes | 0.234 | 0.574 | 9.3 | 283 | 128 | 97 | 914 |
+| depois | 0.502 | 0.706 | 7.2 | 339 | 68 | 134 | 685 |
+
+mAP 0.234 → 0.502; fantasmas 914 → 685, fragmentos 128 → 68, fusões 283 → 339. A correção funcionou: o diagnóstico (peso do fundo) estava certo. Figuras: `runs/dsb_p2_unet_boundary_autoalpha/part5_failure1..5.png` (antes) e `part5_failure1_after.png`, `part5_failure2_after.png` (depois).
+
+## Parte 6 — teste de estresse (DSB2018, teste = 101 imagens inteiras)
+
+| modelo | limpo | blur σ=1/2/3 | ruído σ=.05/.10/.20 | contraste ×.7/.5/.35 (+brilho) | escala 0.5× / 2× |
+|---|---|---|---|---|---|
+| unet | 0.502 | 0.39 / 0.28 / 0.21 | 0.20 / 0.05 / 0.01 | 0.48 / 0.38 / 0.20 | 0.36 / 0.41 |
+
+Figuras: `part6_blur.png`, `part6_ruido.png`, `part6_brilho_contraste.png`, `part6_escala.png`.
+
+
+# Parte 0 — teste unitário sintético (elipses 128×128, 1 núcleo de CPU)
+
+## Partes 1 e 2 — baseline vs. cabeça de instâncias (sintético, teste = 128 imagens)
 
 | modelo | decodificação | matching | mAP | AP50 | AP75 | erro contagem | IoU fg | Dice |
 |---|---|---|---|---|---|---|---|---|
@@ -13,15 +104,15 @@ Todos gerados pelos comandos do README; JSONs de origem indicados em cada seçã
 | U-Net fronteira+dist (Parte 2) | watershed (marcador = interior) | hungarian | 0.547 | 0.847 | 0.632 | 0.891 | 0.898 | 0.946 |
 | U-Net fronteira+dist (Parte 2) | watershed (marcador = distância, Parte 5) | greedy | 0.557 | 0.855 | 0.659 | 0.969 | 0.898 | 0.946 |
 
-`p2_unet_boundary`: 12 épocas em 247.2 s de CPU, 482k parâmetros, melhor val mAP 0.536 (Parte 0: treina em < 5 min).
+`p2_unet_boundary`: 12 épocas em 247.2 s (CPU, 1 núcleo), 482k parâmetros, melhor val mAP 0.536 .
 
-`p1_unet_binary`: 12 épocas em 236.6 s de CPU, 482k parâmetros, melhor val mAP 0.089 (Parte 0: treina em < 5 min).
+`p1_unet_binary`: 12 épocas em 236.6 s (CPU, 1 núcleo), 482k parâmetros, melhor val mAP 0.089 .
 
 Figura mAP × densidade: `runs/p1_unet_binary/eval_test_density.png` e `runs/p2_unet_boundary/eval_test_density.png`.
 
-## Parte 3 — Eixo 1 — como recuperar resolução (mesmo encoder base=8, depth=3)
+## Parte 3 — Eixo 1 — como recuperar resolução (mesmo encoder)
 
-Configuração: `--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 --alpha-max 3`, 2 seeds, média ± desvio, teste em 96 imagens.
+Configuração: `--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 --alpha-max 3`, 2 seeds, média ± desvio.
 
 | config | mAP | AP50 | erro contagem | IoU fg | IoU por classe (bg/int/fronteira) | épocas |
 |---|---|---|---|---|---|---|
@@ -33,7 +124,7 @@ Figura: `runs/ablation/axis1_map.png`
 
 ## Parte 3 — Eixo 2 — função de perda (U-Net)
 
-Configuração: `--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 --alpha-max 3`, 2 seeds, média ± desvio, teste em 96 imagens.
+Configuração: `--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 --alpha-max 3`, 2 seeds, média ± desvio.
 
 | config | mAP | AP50 | erro contagem | IoU fg | IoU por classe (bg/int/fronteira) | épocas |
 |---|---|---|---|---|---|---|
@@ -48,7 +139,7 @@ Configuração: `--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 -
 
 Figura: `runs/ablation/axis2_map.png` e `axis2_boundary_iou.png`
 
-## Parte 4 — inferência em mosaico (cena 3×3 tiles de 128 px, sobreposição 32, 6 cenas)
+## Parte 4 — inferência em mosaico (cena 3×3, 6 cenas; tiles de 128 px, sobreposição 32)
 
 | estratégia | mAP | AP50 | erro contagem | objetos na borda quebrados |
 |---|---|---|---|---|
@@ -80,7 +171,7 @@ antes mAP 0.547 / fusões 127 → depois mAP 0.545 / fusões 166 — **não func
 
 **Correção 3 (marcadores pelos picos da distância):** objetos sem interior no rótulo = 50/1506; melhor {'marker': 'dist', 'thr_d': 0.5, 'map': 0.556, 'ap50': 0.853, 'count_err': 0.93, 'fusao': 131, 'fragmento': 25, 'perdido': 46, 'fantasma': 15} — fantasmas caem, fusões (~130) persistem em todas as variantes → contatos sem evidência fotométrica.
 
-## Parte 6 — teste de estresse (96 imagens de teste)
+## Parte 6 — teste de estresse (sintético, teste = 128 imagens)
 
 | modelo | limpo | blur σ=1/2/3 | ruído σ=.05/.10/.20 | contraste ×.7/.5/.35 (+brilho) | escala 0.5× / 2× |
 |---|---|---|---|---|---|

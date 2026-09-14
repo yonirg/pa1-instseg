@@ -5,8 +5,8 @@
 
 Diagnóstico (galeria de ``dsb_p2_unet_boundary_autoalpha``): p(fronteira) alta no núcleo
 inteiro e o interior quase some → sem marcadores, o watershed devolve fragmentos e
-fantasmas. Causa: o α automático (frequência inversa normalizada para média 1) no DSB, onde
-o fundo é ~97% dos pixels, dá peso ~0,008 ao fundo, ~0,25 ao interior e ~2,7 à fronteira.
+fantasmas. Causa: o α automático (frequência inversa normalizada para média 1) nos recortes do DSB,
+onde a fronteira é só 0,4% dos pixels, dá peso 0,017 ao fundo, 0,11 ao interior e 2,87 à fronteira.
 Mudança sugerida: α fixo fundo/interior/fronteira = 1/1/3 (mesma rede, mesmo orçamento).
 """
 from __future__ import annotations

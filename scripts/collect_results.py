@@ -44,6 +44,10 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
                        f"{s['n_params']/1e3:.0f}k parâmetros, melhor val mAP {s['best_val_map']:.3f} "
                        ".")
     out.append(f"\nFigura mAP × densidade: `runs/{P1}/eval_test_density.png` e `runs/{P2}/eval_test_density.png`.\n")
+    bd = R / f"{pre}breakdown.md"
+    if pre and bd.exists():
+        out += ["### mAP por densidade de núcleos e por modalidade (Parte 1, item 5)\n", bd.read_text(),
+                "Figura: `runs/dsb_breakdown_density.png`.\n"]
 
     # Parte 3
     for ax in (1, 2):
@@ -59,7 +63,9 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
     d = j(R / P2 / "part4_mosaic.json")
     if d:
         a = d["args"]
-        out += [f"## Parte 4 — inferência em mosaico (cena {a['grid']}×{a['grid']} tiles de {a['tile']} px, sobreposição {a['overlap']}, {d.get('n_cenas', a['n_mosaics'])} cenas, `--scene {a.get('scene')}`)\n",
+        scene = (f"{d.get('n_cenas')} imagens grandes do teste (lado menor ≥ {a.get('min_side')} px)" if a.get("scene") == "dsb_large"
+                 else f"cena {a['grid']}×{a['grid']}, {a['n_mosaics']} cenas")
+        out += [f"## Parte 4 — inferência em mosaico ({scene}; tiles de {a['tile']} px, sobreposição {a['overlap']})\n",
                 "| estratégia | mAP | AP50 | erro contagem | objetos na borda quebrados |", "|---|---|---|---|---|"]
         for k, v in d["summary"].items():
             out.append(f"| {k} | {v['map']:.3f} | {v['ap50']:.3f} | {v['count_err']:.1f} | {v['objetos_na_borda_quebrados']} |")
@@ -82,6 +88,9 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
         for k, g in enumerate(f5["galeria"], 1):
             out.append(f"| {k} | {g['index']} | {g['map']:.2f} | {g['fusao']} | {g['fragmento']} | {g['perdido']} | {g['fantasma']} | "
                        f"{g['contraste_fg_bg']:.2f} | {g['ruido_bg']:.2f} | {g['p_fronteira_media_na_fronteira_gt']} |")
+        dg = R / P2 / "part5_diagnosticos.md"
+        if dg.exists():
+            out.append("\n" + dg.read_text())
         c5 = j(R / P2 / "part5_correction.json")   # DSB: correção escolhida a partir da galeria
         if c5:
             out += [f"\n**Correção ({c5['diagnostico']}):** {c5['mudanca']}\n",

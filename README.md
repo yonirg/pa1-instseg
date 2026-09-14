@@ -74,8 +74,12 @@ caminho de uma imagem qualquer e devolve a máscara colorida e a contagem, usand
    instâncias*) + distância ao fundo normalizada **por instância** (∈ [0,1]). A fronteira é
    gerada do mapa de ids com max/min-filter: pixel de objeto cuja vizinhança (2t+1)² contém
    outro id (t = 2 px). Fundo não conta — é exatamente o pixel que a semântica não separa.
-2. **Qual perda** — CE / CE balanceada (α = frequência inversa, EMA no batch, com teto
-   `--alpha-max`) / focal / focal balanceada para as classes; L1 para a distância.
+2. **Qual perda** — CE / CE balanceada / focal / focal balanceada para as classes; L1 para a
+   distância. O α pode ser automático (frequência inversa, EMA no batch, teto `--alpha-max`) ou
+   fixo (`--alpha 1,1,3`). **Modelo final no DSB: focal balanceada γ=2 com α fixo
+   fundo/interior/fronteira = 1/1/3.** O α automático funcionou no sintético (fronteira = 5% dos
+   pixels, α de fundo 0,15), mas nos recortes do DSB a fronteira entre núcleos é só 0,4% dos pixels
+   e o α vira 0,017 / 0,11 / 2,87: a rede passa a chamar o núcleo inteiro de fronteira. Esse é o diagnóstico e a correção da Parte 5 (val mAP 0,18 → 0,36).
 3. **Como decodificar** — marcadores = componentes do interior (ou picos da distância,
    `--marker-source dist`); máscara = interior ∪ fronteira; elevação = −distância; watershed.
    Foreground sem marcador vira instância própria (não perde objetos pequenos).

@@ -1,0 +1,9 @@
+**Diagnóstico de cada falha** (modelo final; figuras `runs/dsb_p2_unet_boundary/part5_failure1..5.png`). Campo receptivo de 140 px contra núcleos de no máximo 88 px: nenhuma das cinco falhas é de campo receptivo.
+
+1. **idx 98 — brightfield 1024×1024 (células escamosas).** Núcleos escuros de 10–35 px sobre citoplasma também escuro; 71 fantasmas e 45 perdidos. O brightfield tem 16 imagens no DSB inteiro (11 no treino, 2,3%), com contraste invertido em relação à fluorescência (contraste fg/bg −0,42). A rede nunca aprendeu a separar "núcleo escuro" de "citoplasma escuro": é mudança de modalidade, não de arquitetura.
+2. **idx 16 — brightfield 1024×1024.** Mesmo quadro: 78 fantasmas em detritos e bordas de citoplasma. p(fronteira) quase zero nos núcleos verdadeiros (0,36 no contato), então nem a cabeça de fronteira ajuda: o erro acontece antes, no foreground.
+3. **idx 40 — brightfield 1024×1024.** 68 fantasmas; além disso, o recorte de 256 px usado no treino, numa imagem de 1024 com poucos núcleos pequenos, muitas vezes não contém núcleo nenhum. Com só 11 imagens, a rede vê poucos exemplos positivos dessa modalidade.
+4. **idx 42 — histologia 256×320, núcleos alongados de até 79 px.** 19 fantasmas e 4 fusões. A textura roxa dentro dos núcleos grandes gera vários máximos locais na distância prevista, e cada máximo vira marcador (fragmentos e fantasmas). No contato entre núcleos, p(fronteira) é só 0,32.
+5. **idx 27 — histologia fora de foco.** 8 fusões e p(fronteira) de 0,26 no contato: núcleos borrados e sobrepostos não têm borda visível entre si. Sem evidência fotométrica, a cabeça de fronteira não tem o que detectar.
+
+**Padrão:** as 5 piores imagens do teste são das duas modalidades minoritárias (brightfield e histologia). A tabela por modalidade confirma: mAP 0,57 em fluorescência, 0,23 em histologia e 0,02 em brightfield (`runs/dsb_breakdown.md`).

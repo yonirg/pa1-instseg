@@ -53,6 +53,7 @@ def main():
     ap.add_argument("--out", default="runs/ablation")
     ap.add_argument("--test-limit", type=int, default=96)
     ap.add_argument("--max-new-runs", type=int, default=999, help="treina no máximo N configs por chamada (retomável)")
+    ap.add_argument("--configs", nargs="+", default=None, help="subconjunto das configs do eixo (ex.: ce bal_ce focal_g2)")
     args, extra = ap.parse_known_args()
     # sobrescritas livres: --base 8 --time-limit 60 --epochs 6 ...
     overrides = {}
@@ -76,6 +77,8 @@ def main():
     results = {}
     new_runs = 0
     for name, cfg_axis in AXES[args.axis]:
+        if args.configs and name not in args.configs:
+            continue
         for seed in args.seeds:
             cfg = {**overrides, **cfg_axis, "seed": seed}
             full = {**DEFAULTS, **cfg}
