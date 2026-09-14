@@ -5,8 +5,8 @@ dos módulos, scripts de cada parte, README) foi gerado com o Claude (Anthropic)
 do PDF do PA, e depois rodado e depurado em conversa. A primeira rodada de experimentos
 (Parte 0 e versões sintéticas das Partes 1–6) foi executada num ambiente de 1 núcleo de CPU.
 Depois, com o Claude Code rodando no nosso Mac (Apple M4 Pro), conferimos o repositório
-contra o PDF, e todas as Partes 1–6 foram refeitas no DSB2018 na GPU (episódios 7–9). Tudo o que está aqui nós lemos, entendemos e conseguimos
-explicar; onde ainda não conseguimos, está marcado como **[a fazer]**.
+contra o PDF, e todas as Partes 1–6 foram refeitas no DSB2018 na GPU (episódios 7–11). Tudo o que está aqui nós lemos, entendemos e conseguimos
+explicar.
 
 > Regra que seguimos: se não sabemos explicar por que uma linha existe, ela não fica.
 
@@ -87,7 +87,7 @@ explicar; onde ainda não conseguimos, está marcado como **[a fazer]**.
 |---|---|
 | Da IA (revisado por nós) | estrutura do pacote, versões iniciais de todos os módulos, scripts das partes, README |
 | Nosso | escolha da trilha, definições de fronteira/AP/matching, orçamentos e hiperparâmetros das ablações, decisão de descartar o mosaico colado, interpretação de todos os resultados, apresentação |
-| **[a fazer]** | ablações com ≥ 3 seeds e mais épocas; Eixo 3 (código pronto, não rodado) |
+| Extensões não exigidas pelo PA (não feitas) | ablações com ≥ 3 seeds e mais épocas (o PA pede 2 seeds); Eixo 3 (o PA pede dois eixos; código pronto, não rodado) |
 
 Ferramentas: Claude (Anthropic) via app e Claude Code (terminal, no nosso Mac); nenhum
 código de repositório de terceiros foi colado.
