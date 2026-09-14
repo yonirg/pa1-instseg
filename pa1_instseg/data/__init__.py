@@ -71,7 +71,8 @@ def collate(samples: list[dict]) -> dict:
         if k in ("index", "inst"):
             out[k] = v  # inst: tamanhos podem diferir (DSB teste); fica como lista
         else:
-            out[k] = torch.from_numpy(np.stack(v))
+            # contíguo: a imagem do DSB vem de um transpose HWC→CHW e, sem isso, as convs no MPS ficam ~3× mais lentas
+            out[k] = torch.from_numpy(np.ascontiguousarray(np.stack(v)))
     return out
 
 

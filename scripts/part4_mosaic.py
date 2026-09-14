@@ -31,8 +31,10 @@ def main():
     ap.add_argument("--overlap", type=int, default=32)
     ap.add_argument("--n-mosaics", type=int, default=6)
     ap.add_argument("--iou-thr", type=float, default=0.25)
-    ap.add_argument("--scene", default="large", choices=["large", "mosaic"],
-                    help="large: cena sintética grande gerada direto (sem emendas); mosaic: colagem de imagens do teste")
+    ap.add_argument("--scene", default="large", choices=["large", "mosaic", "dsb_large"],
+                    help="large: cena sintética grande gerada direto (sem emendas); mosaic: colagem de imagens do teste; "
+                         "dsb_large: imagens grandes do teste do DSB2018 (lado menor ≥ --min-side), sem emendas")
+    ap.add_argument("--min-side", type=int, default=500)
     args = ap.parse_args()
 
     model, cfg = load_run(args.run)
@@ -51,8 +53,13 @@ def main():
     border_stats = {k: {"split": 0, "n_border": 0} for k in strategies}
     example = None
     k = args.grid ** 2
-    for m in range(args.n_mosaics):
-        if args.scene == "mosaic":
+    big = [i for i in range(len(test)) if min(test.raw(i)[1].shape) >= args.min_side] if args.scene == "dsb_large" else []
+    n_scenes = min(args.n_mosaics, len(big)) if args.scene == "dsb_large" else args.n_mosaics
+    for m in range(n_scenes):
+        if args.scene == "dsb_large":
+            s = test[big[m]]
+            img, gt = s["image"], s["inst"].astype(np.int32)
+        elif args.scene == "mosaic":
             idxs = list(range(m * k, (m + 1) * k))
             img, gt = make_mosaic(test, idxs, (args.grid, args.grid))
         else:  # cena grande com a mesma densidade de objetos por área do treino
@@ -92,7 +99,7 @@ def main():
                       "objetos_na_borda_quebrados": f"{border_stats[name]['split']}/{border_stats[name]['n_border']}"}
                for name, rs in per.items()}
     out = Path(args.run) / "part4_mosaic.json"
-    out.write_text(json.dumps({"args": vars(args), "summary": summary}, indent=1))
+    out.write_text(json.dumps({"args": vars(args), "n_cenas": n_scenes, "summary": summary}, indent=1))
     print(json.dumps(summary, indent=1, ensure_ascii=False))
 
     # figura: zoom num objeto que cai na fronteira entre dois miolos
