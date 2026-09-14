@@ -40,8 +40,8 @@ class SemanticLoss(nn.Module):
 
     @torch.no_grad()
     def _update_alpha(self, target: torch.Tensor):
-        freq = torch.bincount(target.flatten(), minlength=self.n_classes).float()
-        freq = freq / freq.sum().clamp_min(1)
+        # comparação por classe em vez de torch.bincount, que no MPS cai para CPU (~0,4 s/passo)
+        freq = torch.stack([(target == c).float().mean() for c in range(self.n_classes)])
         inv = 1.0 / (freq + 1e-3)
         inv = inv / inv.sum() * self.n_classes           # média dos pesos = 1
         if self.alpha_max is not None:

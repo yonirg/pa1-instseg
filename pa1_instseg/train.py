@@ -43,11 +43,13 @@ def run(cfg: dict, verbose: bool = True) -> dict:
     out_dir = Path(cfg["out"]); out_dir.mkdir(parents=True, exist_ok=True)
 
     dsets, in_ch = get_datasets(cfg)
-    train_ds = CachedDataset(dsets["train"], augment=True, seed=cfg["seed"]) if cfg["cache"] else dsets["train"]
+    # DSB: sem cache no treino — o recorte aleatório 256 e a augmentação são refeitos a cada época
+    use_cache = cfg["cache"] and cfg["dataset"] == "synthetic"
+    train_ds = CachedDataset(dsets["train"], augment=True, seed=cfg["seed"]) if use_cache else dsets["train"]
     val_ds = CachedDataset(dsets["val"]) if cfg["cache"] else dsets["val"]
 
     criterion = MultiHeadLoss(cfg["head"], cfg["loss"], cfg["gamma"], cfg["alpha"],
-                              cfg["dist_loss"], cfg["dist_weight"], alpha_max=cfg["alpha_max"])
+                              cfg["dist_loss"], cfg["dist_weight"], alpha_max=cfg["alpha_max"]).to(cfg["device"])
     cfg["in_ch"], cfg["out_ch"] = in_ch, criterion.out_channels
     extra = {"output_stride": cfg["output_stride"], "aspp_rates": tuple(cfg["aspp_rates"])} if cfg["arch"] == "deeplab" else {}
     model = build_model(cfg["arch"], in_ch, cfg["out_ch"], base=cfg["base"], depth=cfg["depth"],

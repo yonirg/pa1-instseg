@@ -4,3 +4,6 @@ __pycache__/
 /data/
 exemplo_notebook.png
 exemplo_instancias.npy
+logs/
+.DS_Store
+PA1.pdf
