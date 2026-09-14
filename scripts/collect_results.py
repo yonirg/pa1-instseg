@@ -134,7 +134,7 @@ def main():
            "# DSB2018 / BBBC038v1 (Opção A) — Partes 1 a 6\n",
            "Split estratificado por modalidade (469/100/101 imagens). Teste em imagem inteira. GPU Apple M4 Pro (MPS).\n"]
     out += section("dsb_", "DSB2018, teste = 101 imagens inteiras", "GPU MPS",
-                   "--dataset dsb --base 16 --depth 4 --epochs 15 --time-limit 300 --alpha-max 3")
+                   "--dataset dsb --base 16 --depth 4 --epochs 15 --time-limit 150 --alpha 1,1,3 (modelo final: base 32, 30 épocas)")
     out += ["\n# Parte 0 — teste unitário sintético (elipses 128×128, 1 núcleo de CPU)\n"]
     out += section("", "sintético, teste = 128 imagens", "CPU, 1 núcleo",
                    "--epochs 12 --time-limit 100 --base 8 --n-train 300 --lr 2e-3 --alpha-max 3")

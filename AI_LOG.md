@@ -69,6 +69,18 @@ explicar; onde ainda não conseguimos, está marcado como **[a fazer]**.
    256×256 de cada imagem uma vez só; no DSB isso fixa o mesmo recorte em todas as épocas.
    O treino no DSB passou a não usar cache (o custo de gerar os rótulos é ~3 ms/amostra).
 
+10. **O α que funcionava no sintético quebrou no DSB (vira a Parte 5).** O primeiro modelo
+    final no DSB (focal balanceada, α automático) ficou com val mAP 0,18 e IoU de foreground de
+    0,62 até em imagens de treino, ou seja, não era overfitting. A galeria mostrou p(fronteira)
+    alta no núcleo inteiro e 914 fantasmas no teste. A conta explica: nos recortes do DSB a
+    fronteira entre núcleos é 0,4% dos pixels (no sintético, 5%), e o α de frequência inversa
+    normalizado vira 0,017 / 0,11 / 2,87 (fundo/interior/fronteira). Com α fixo 1/1/3, mesma rede
+    e mesmo orçamento: val mAP 0,36, teste 0,234 → 0,502. As ablações no DSB usam esse α fixo.
+
+11. **Orçamento com prazo.** Com o prazo apertado, as ablações no DSB usam um encoder menor
+    (base 16, 15 épocas, ~2 min por treino) que o modelo final (base 32, 30 épocas, ~6 min).
+    As conclusões da Parte 3 valem para esse regime curto, e isso está dito no RESULTS.
+
 ## O que é nosso e o que é da IA
 
 | | |
