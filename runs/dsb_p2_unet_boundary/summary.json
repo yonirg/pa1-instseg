@@ -1,0 +1,7 @@
+{
+ "best_val_map": 0.3583861198523506,
+ "epochs_run": 30,
+ "train_seconds": 350.3,
+ "n_params": 7763140,
+ "out": "runs/dsb_p2_unet_boundary_a113"
+}

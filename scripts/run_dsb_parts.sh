@@ -5,6 +5,9 @@ cd "$(dirname "$0")/.."
 PY=${PY:-python}
 P1=runs/dsb_p1_unet_binary
 P2=runs/dsb_p2_unet_boundary
+# Parte 1: baseline binário (limiar + componentes conexos), as duas regras de matching
+$PY -m pa1_instseg.evaluate --run $P1 --split test
+$PY -m pa1_instseg.evaluate --run $P1 --split test --rule hungarian
 # Partes 1 e 2: métricas lado a lado, as duas regras de matching, decodificação ingênua na rede da Parte 2
 $PY -m pa1_instseg.evaluate --run $P2 --split test
 $PY -m pa1_instseg.evaluate --run $P2 --split test --rule hungarian
@@ -19,3 +22,4 @@ $PY scripts/part6_stress.py --run $P2 --limit 101
 # Parte 5: antes (α automático) × depois (α fixo 1/1/3) — mesma galeria, mesma taxonomia
 $PY -m pa1_instseg.evaluate --run runs/dsb_p2_unet_boundary_autoalpha --split test
 $PY scripts/part5_failures.py --run runs/dsb_p2_unet_boundary_autoalpha --fixed $P2
+$PY scripts/part5_correction_dsb.py

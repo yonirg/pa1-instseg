@@ -8,7 +8,7 @@ PY=${PY:-python}
 DEV=${DEV:-mps}
 mkdir -p logs
 COMMON="--dataset dsb --data-root data --arch unet --base 32 --depth 4 --epochs 30 --time-limit 900 --device $DEV --threads 4 --val-limit 50 --alpha-max 3"
-ABL="--seeds 0 1 --out runs/dsb_ablation --test-limit 101 --dataset dsb --data-root data --base 16 --depth 4 --epochs 15 --time-limit 150 --alpha-max 3 --device $DEV --threads 4 --val-limit 40 --eval-every 3"
+ABL="--seeds 0 1 --out runs/dsb_ablation --test-limit 101 --dataset dsb --data-root data --base 16 --depth 4 --epochs 15 --time-limit 150 --alpha 1,1,3 --device $DEV --threads 4 --val-limit 40 --eval-every 3"
 # Parte 2, 1ª versão (= "antes" da Parte 5): α automático por frequência inversa
 $PY -m pa1_instseg.train $COMMON --head boundary --loss balanced_focal --gamma 2 --out runs/dsb_p2_unet_boundary_autoalpha > logs/dsb_p2_autoalpha.log 2>&1
 # Parte 2, modelo final (= "depois" da Parte 5): α fixo fundo/interior/fronteira = 1/1/3
