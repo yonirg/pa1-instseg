@@ -37,6 +37,22 @@ Imagens por faixa: {'0–9': 12, '10–24': 32, '25–49': 27, '50–99': 20, '�
 
 Figura: `runs/dsb_breakdown_density.png`.
 
+IoU por classe no teste (fundo / interior / fronteira): modelo final 0.98 / 0.83 / 0.13; com α automático 0.95 / 0.70 / 0.08 (`runs/dsb_class_iou_final.json`).
+
+## Parte 3 — Eixo 1 — como recuperar resolução (mesmo encoder)
+
+Configuração: `--dataset dsb --base 16 --depth 4 --epochs 15 --time-limit 150 --alpha 1,1,3 (modelo final: base 32, 30 épocas)`, 2 seeds, média ± desvio.
+
+| config | mAP | AP50 | erro contagem | IoU fg | IoU por classe (bg/int/fronteira) | épocas |
+|---|---|---|---|---|---|---|
+| segnet | 0.326 ± 0.010 | 0.558 ± 0.001 | 11.37 ± 0.84 | 0.750 | 0.97±0.00 / 0.79±0.00 / 0.00±0.00 | 15 |
+| unet | 0.370 ± 0.000 | 0.600 ± 0.013 | 13.73 ± 3.55 | 0.768 | 0.97±0.00 / 0.80±0.00 / 0.00±0.00 | 15 |
+| deeplab | 0.349 ± 0.005 | 0.574 ± 0.003 | 10.90 ± 0.96 | 0.762 | 0.97±0.00 / 0.79±0.00 / 0.00±0.00 | 15 |
+
+Figura: `runs/dsb_ablation/axis1_map.png`
+
+**Leitura do Eixo 1.** Com o mesmo encoder e o mesmo orçamento, **skip connections (U-Net) > atrous + ASPP (DeepLab OS8) > índices de pooling (SegNet)**, e as duas seeds concordam (desvio ≤ 0,01 no mAP). O que decide é recuperar detalhe fino: o contato entre dois núcleos tem 1–3 px. A U-Net traz de volta, pela skip, os mapas de alta resolução do encoder. A SegNet só devolve *onde* estava o máximo, não o conteúdo. A DeepLab decodifica em 1/8 e sobe ×8 por interpolação bilinear, borrando exatamente esses pixels. O campo receptivo maior da DeepLab (356 px) não ajuda: os núcleos têm mediana de 21 px e máximo de 88 px. Nesse regime curto (base 16, 15 épocas), a classe fronteira fica com IoU ≈ 0 nas três arquiteturas, e a separação vem do mapa de distância + watershed. No modelo final (base 32, 30 épocas), o IoU da fronteira chega a 0,13.
+
 ## Parte 4 — inferência em mosaico (23 imagens grandes do teste (lado menor ≥ 500 px); tiles de 256 px, sobreposição 64)
 
 | estratégia | mAP | AP50 | erro contagem | objetos na borda quebrados |
@@ -89,6 +105,12 @@ mAP 0.234 → 0.502; fantasmas 914 → 685, fragmentos 128 → 68, fusões 283 �
 | unet | 0.502 | 0.39 / 0.28 / 0.21 | 0.20 / 0.05 / 0.01 | 0.48 / 0.38 / 0.20 | 0.36 / 0.41 |
 
 Figuras: `part6_blur.png`, `part6_ruido.png`, `part6_brilho_contraste.png`, `part6_escala.png`.
+
+**Leitura (Parte 6, corrupções escolhidas; escala como extra).**
+- **Ruído é o que mais derruba (σ=0,05 → mAP 0,20).** Na fluorescência (82 das 101 imagens de teste) o fundo fica em ~0,02–0,05 e muitos núcleos são tênues, então σ=0,05 já tem a ordem do contraste do objeto. O treino não teve augmentação de ruído.
+- **Blur σ=1 → 0,39.** O contato entre dois núcleos tem 1–3 px, e o blur apaga exatamente a evidência que a cabeça de fronteira usa. As fusões voltam.
+- **Contraste/brilho é o mais robusto (×0,7 → 0,48).** O treino já tinha jitter de contraste ±20% e de brilho ±0,1.
+- **Escala (0,5× → 0,36; 2× → 0,41).** A rede é totalmente convolucional: filtros e campo receptivo são fixos em pixels, e o rótulo de fronteira tem espessura fixa (2 px). Em 0,5×, o núcleo mediano cai de 21 para ~10 px, e fronteira e interior quase somem. Em 2×, cabem núcleos de ~42 px (ainda abaixo do campo receptivo de 140 px), mas textura e espessura de borda mudam de escala. O ASPP amostra várias dilatações em paralelo e dá contexto em mais de uma escala ao encoder, mas não muda a escala da representação de saída nem os limiares do decodificador. Não medimos a DeepLab em escala por falta de tempo.
 
 
 # Parte 0 — teste unitário sintético (elipses 128×128, 1 núcleo de CPU)

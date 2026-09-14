@@ -49,6 +49,12 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
         out += ["### mAP por densidade de núcleos e por modalidade (Parte 1, item 5)\n", bd.read_text(),
                 "Figura: `runs/dsb_breakdown_density.png`.\n"]
 
+    ci = j(R / f"{pre}class_iou_final.json") if pre else None
+    if ci:
+        out.append("IoU por classe no teste (fundo / interior / fronteira): modelo final "
+                   + " / ".join(f"{v:.2f}" for v in ci[f"runs/{P2}"]) + "; com α automático "
+                   + " / ".join(f"{v:.2f}" for v in ci[f"runs/{P2}_autoalpha"]) + " (`runs/dsb_class_iou_final.json`).\n")
+
     # Parte 3
     for ax in (1, 2):
         t = R / ABL / f"axis{ax}_table.md"
@@ -58,6 +64,9 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
             out += [f"## Parte 3 — {title}\n",
                     f"Configuração: `{abl_cfg}`, 2 seeds, média ± desvio.\n",
                     t.read_text(), f"Figura: `runs/{ABL}/axis{ax}_map.png`" + (" e `axis2_boundary_iou.png`" if ax == 2 else "") + "\n"]
+            itp = R / ABL / f"axis{ax}_interpretacao.md"
+            if pre and itp.exists():
+                out.append(itp.read_text())
 
     # Parte 4
     d = j(R / P2 / "part4_mosaic.json")
@@ -124,6 +133,9 @@ def section(pre: str, ds_name: str, hw: str, abl_cfg: str) -> list[str]:
                        + " / ".join(f"{v:.2f}" for v in c["ruido"]) + " | " + " / ".join(f"{v:.2f}" for v in c["brilho_contraste"])
                        + f" | {r['escala']['0.5']:.2f} / {r['escala']['2.0']:.2f} |")
         out.append("\nFiguras: `part6_blur.png`, `part6_ruido.png`, `part6_brilho_contraste.png`, `part6_escala.png`.\n")
+        it6 = R / P2 / "part6_interpretacao.md"
+        if it6.exists():
+            out.append(it6.read_text())
 
     return out
 
