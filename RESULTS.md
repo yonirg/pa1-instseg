@@ -53,6 +53,30 @@ Figura: `runs/dsb_ablation/axis1_map.png`
 
 **Leitura do Eixo 1.** Com o mesmo encoder e o mesmo orçamento, **skip connections (U-Net) > atrous + ASPP (DeepLab OS8) > índices de pooling (SegNet)**, e as duas seeds concordam (desvio ≤ 0,01 no mAP). O que decide é recuperar detalhe fino: o contato entre dois núcleos tem 1–3 px. A U-Net traz de volta, pela skip, os mapas de alta resolução do encoder. A SegNet só devolve *onde* estava o máximo, não o conteúdo. A DeepLab decodifica em 1/8 e sobe ×8 por interpolação bilinear, borrando exatamente esses pixels. O campo receptivo maior da DeepLab (356 px) não ajuda: os núcleos têm mediana de 21 px e máximo de 88 px. Nesse regime curto (base 16, 15 épocas), a classe fronteira fica com IoU ≈ 0 nas três arquiteturas, e a separação vem do mapa de distância + watershed. No modelo final (base 32, 30 épocas), o IoU da fronteira chega a 0,13.
 
+## Parte 3 — Eixo 2 — função de perda (U-Net)
+
+Configuração: `--dataset dsb --base 16 --depth 4 --epochs 15 --time-limit 150 --alpha 1,1,3 (modelo final: base 32, 30 épocas)`, 2 seeds, média ± desvio.
+
+| config | mAP | AP50 | erro contagem | IoU fg | IoU por classe (bg/int/fronteira) | épocas |
+|---|---|---|---|---|---|---|
+| ce | 0.388 ± 0.005 | 0.589 ± 0.014 | 14.01 ± 1.63 | 0.769 | 0.96±0.01 / 0.77±0.03 / 0.00±0.00 | 15 |
+| bal_ce | 0.383 ± 0.008 | 0.597 ± 0.009 | 10.32 ± 0.05 | 0.772 | 0.97±0.00 / 0.80±0.00 / 0.00±0.00 | 15 |
+| focal_g1 | 0.371 ± 0.006 | 0.586 ± 0.004 | 14.89 ± 2.13 | 0.760 | 0.97±0.00 / 0.79±0.01 / 0.00±0.00 | 15 |
+| focal_g2 | 0.372 ± 0.024 | 0.601 ± 0.012 | 11.91 ± 0.82 | 0.765 | 0.97±0.00 / 0.78±0.01 / 0.00±0.00 | 15 |
+| focal_g5 | 0.339 ± 0.027 | 0.588 ± 0.016 | 12.17 ± 0.22 | 0.750 | 0.97±0.00 / 0.78±0.02 / 0.00±0.00 | 15 |
+| bal_focal_g1 | 0.394 ± 0.015 | 0.610 ± 0.004 | 10.21 ± 0.35 | 0.782 | 0.97±0.00 / 0.80±0.00 / 0.00±0.00 | 15 |
+| bal_focal_g2 | 0.370 ± 0.000 | 0.600 ± 0.013 | 13.73 ± 3.55 | 0.768 | 0.97±0.00 / 0.80±0.00 / 0.00±0.00 | 15 |
+| bal_focal_g5 | 0.307 ± 0.008 | 0.554 ± 0.027 | 13.00 ± 2.91 | 0.749 | 0.97±0.00 / 0.78±0.02 / 0.01±0.00 | 15 |
+
+Figura: `runs/dsb_ablation/axis2_map.png` e `axis2_boundary_iou.png`
+
+**Leitura do Eixo 2** (U-Net base 16, 15 épocas; nas versões balanceadas, α fixo fundo/interior/fronteira = 1/1/3).
+- **γ ≤ 2 empata dentro do desvio** (mAP de 0,37 a 0,39). **γ = 5 piora nas duas famílias** (focal 0,339; focal balanceada 0,307): com γ alto, os pixels "fáceis" de interior e fundo quase não contribuem, e o gradiente fica ruidoso.
+- **O peso α aparece no erro de contagem, não no mAP.** Com o mesmo γ, a versão balanceada conta melhor: CE 14,0 → CE balanceada 10,3; focal γ=1 14,9 → 10,2. Mais peso na fronteira gera menos fusões e contagem mais perto do GT.
+- **IoU da fronteira ≈ 0 em todas as configurações neste orçamento.** A fronteira é 0,4% dos pixels dos recortes, e em 15 épocas nenhuma perda faz essa classe vencer o argmax (no modelo final, com 30 épocas e base 32, chega a 0,13). Nesse regime a separação vem da cabeça de distância (L1, que o Eixo 2 não mexe), o que explica o efeito pequeno das perdas no mAP.
+- **O efeito mais forte do desbalanceamento está na Parte 5:** balancear demais (α automático 0,017 / 0,11 / 2,87) derruba o modelo final de 0,502 para 0,234. Pesar a minoritária só funciona se a majoritária não for zerada.
+- Melhor configuração: focal balanceada γ=1 (0,394 ± 0,015; menor erro de contagem, 10,2). O modelo final usa γ=2, escolhido antes da ablação. A diferença para γ=1 (0,024) está perto do desvio entre seeds.
+
 ## Parte 4 — inferência em mosaico (23 imagens grandes do teste (lado menor ≥ 500 px); tiles de 256 px, sobreposição 64)
 
 | estratégia | mAP | AP50 | erro contagem | objetos na borda quebrados |

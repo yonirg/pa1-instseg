@@ -1,0 +1,6 @@
+**Leitura do Eixo 2** (U-Net base 16, 15 épocas; nas versões balanceadas, α fixo fundo/interior/fronteira = 1/1/3).
+- **γ ≤ 2 empata dentro do desvio** (mAP de 0,37 a 0,39). **γ = 5 piora nas duas famílias** (focal 0,339; focal balanceada 0,307): com γ alto, os pixels "fáceis" de interior e fundo quase não contribuem, e o gradiente fica ruidoso.
+- **O peso α aparece no erro de contagem, não no mAP.** Com o mesmo γ, a versão balanceada conta melhor: CE 14,0 → CE balanceada 10,3; focal γ=1 14,9 → 10,2. Mais peso na fronteira gera menos fusões e contagem mais perto do GT.
+- **IoU da fronteira ≈ 0 em todas as configurações neste orçamento.** A fronteira é 0,4% dos pixels dos recortes, e em 15 épocas nenhuma perda faz essa classe vencer o argmax (no modelo final, com 30 épocas e base 32, chega a 0,13). Nesse regime a separação vem da cabeça de distância (L1, que o Eixo 2 não mexe), o que explica o efeito pequeno das perdas no mAP.
+- **O efeito mais forte do desbalanceamento está na Parte 5:** balancear demais (α automático 0,017 / 0,11 / 2,87) derruba o modelo final de 0,502 para 0,234. Pesar a minoritária só funciona se a majoritária não for zerada.
+- Melhor configuração: focal balanceada γ=1 (0,394 ± 0,015; menor erro de contagem, 10,2). O modelo final usa γ=2, escolhido antes da ablação. A diferença para γ=1 (0,024) está perto do desvio entre seeds.

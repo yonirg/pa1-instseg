@@ -101,7 +101,8 @@ pa1_instseg/
   tiling.py           tiles + 2 correções (Parte 4)    receptive_field.py  RF teórico (slides 35–38)
   train.py / evaluate.py / ablation.py / infer.py / inference.py / viz.py
 scripts/  run_dsb.sh  run_dsb_parts.sh  run_main_synthetic.sh  part4_mosaic.py  part5_failures.py
-          part5_postproc_sweep.py  part6_stress.py  collect_results.py
+          part5_correction_dsb.py  part5_postproc_sweep.py  part6_stress.py  dsb_breakdown.py
+          dsb_class_iou.py  collect_results.py
 runs/     dsb_* = DSB2018 (Partes 1–6); p1_*, p2_*, ablation, p5_* = sintético (Parte 0)
 ```
 
